@@ -1,9 +1,9 @@
-using UnityStandardAssets.Vehicles.Car;
+using UnityEngine;
 
 namespace GeneticCars.Assets.Scripts
 {
     public interface IFitnessAccumulatorFactory
     {
-        IFitnessAccumulator Create(Car car);
+        IFitnessAccumulator Create(GameObject gameObject);
     }
 }

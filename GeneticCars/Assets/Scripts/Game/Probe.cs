@@ -1,4 +1,5 @@
-﻿using System.Linq;
+﻿using System;
+using System.Linq;
 using UnityEngine;
 
 namespace GeneticCars.Assets.Scripts.Game
@@ -17,23 +18,21 @@ namespace GeneticCars.Assets.Scripts.Game
 
         public void Reset(int sensorCount)
         {
+            if (sensorCount < 2)
+            {
+                throw new ArgumentOutOfRangeException("Sensor count cannot be lower than 2.");
+            }
+            
             SensorCount = sensorCount;
             SensorDistances = Enumerable.Repeat(MaxSensorDistance, SensorCount).ToArray();
             _sensorRotations = new Quaternion[SensorCount];
             _sensorRays = new Ray[SensorCount];
 
-            if (sensorCount == 1)
+            float incrementAngle = SpreadAngle / (SensorCount - 1);
+            for (int i = 0; i < SensorCount; i++)
             {
-                _sensorRotations[0] = Quaternion.identity;
-            }
-            else
-            {
-                float incrementAngle = SpreadAngle / (SensorCount - 1);
-                for (int i = 0; i < SensorCount; i++)
-                {
-                    float rotationAngle = (SpreadAngle / 2) - i * incrementAngle;
-                    _sensorRotations[i] = Quaternion.Euler(0f, rotationAngle, 0f);
-                }
+                float rotationAngle = (SpreadAngle / 2) - i * incrementAngle;
+                _sensorRotations[i] = Quaternion.Euler(0f, rotationAngle, 0f);
             }
         }
 

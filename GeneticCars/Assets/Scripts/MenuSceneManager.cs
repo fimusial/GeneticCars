@@ -84,6 +84,7 @@ namespace GeneticCars.Assets.Scripts
             {
                 case 0: return x => (float)Math.Tanh(x);
                 case 1: return x => (float)Math.Max(0, x);
+                case 2: return x => (float)(1 / (1 + Math.Exp(-x)));
                 default: throw new Exception("Invalid dropdown value.");
             }
         }
@@ -143,6 +144,7 @@ namespace GeneticCars.Assets.Scripts
             switch (FitnessFunctionType.value)
             {
                 case 0: return new DistanceTraveledFitnessAccumulatorFactory();
+                case 1: return new StabilizedDistanceTraveledFitnessAccumulatorFactory();
                 default: throw new Exception("Invalid dropdown value.");
             }
         }

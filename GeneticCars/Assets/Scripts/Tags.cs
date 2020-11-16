@@ -5,5 +5,6 @@ namespace GeneticCars.Assets.Scripts
         public const string CarAgent = "CarAgent";
         public const string TrackWall = "TrackWall";
         public const string TrackStartPoint = "TrackStartPoint";
+        public const string Track = "Track";
     }
 }

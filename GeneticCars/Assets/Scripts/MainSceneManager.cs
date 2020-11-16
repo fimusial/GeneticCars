@@ -20,26 +20,31 @@ namespace GeneticCars.Assets.Scripts
         public Text HighestFitnessText;
         public Text TimeScaleIndicatorText;
 
+        private int _trackIndex;
+        private IList<GameObject> _tracks;
+        private IList<Agent> _agents;
         private GeneticAlgorithm _geneticAlgorithm;
         private IFitnessAccumulatorFactory _fitnessAccumulatorFactory;
-        private Vector3 _trackStartPoint = new Vector3(0f, 10f, 0f);
-
-        private IList<Agent> _agents;
-        private float _highestFitness = 0f;
         private float _timestamp;
         private float _agentsLifespan = 50f;
+        private float _highestFitness = 0f;
         private const float DefaultTimeScale = 1f;
         private const float FirstStartTimeDelay = 0.5f;
 
         public void Start()
         {
+            _trackIndex = 0;
+            _tracks = GameObject.FindGameObjectsWithTag(Tags.Track).ToList();
+
+            foreach (var track in _tracks.Skip(1))
+            {
+                track.SetActive(false);
+            }
+
             var geneticAlgorithmParameters = (GeneticAlgorithmParameters)Scenes.Data[DataTags.GeneticAlgorithmParameters];
             var fitnessAccumulatorFactory = (IFitnessAccumulatorFactory)Scenes.Data[DataTags.FitnessAccumulatorFactory];
-
             _fitnessAccumulatorFactory = fitnessAccumulatorFactory;
             _geneticAlgorithm = new GeneticAlgorithm(geneticAlgorithmParameters);
-            _trackStartPoint = GameObject.FindGameObjectWithTag(Tags.TrackStartPoint).transform.position;
-
             _geneticAlgorithm.Initialize();
 
             _agents = Enumerable
@@ -66,31 +71,17 @@ namespace GeneticCars.Assets.Scripts
             {
                 if (!_geneticAlgorithm.IsGenerationLimitReached())
                 {
-                    _geneticAlgorithm.NextGeneration(_agents.Select(agent => new GeneticAlgorithmAgent()
-                    {
-                        Network = agent.Network,
-                        Fitness = agent.FitnessAccumulator.Fitness
-                    })
-                    .ToList());
-
-                    ResetAgents();
-                    SetTimestampToNow();
+                    PrepareNextGeneration();
+                }
+                else if (_trackIndex < _tracks.Count - 1)
+                {
+                    PrepareNextTrack();
+                    PrepareNextGeneration();
+                    _highestFitness = 0f;
                 }
                 else
                 {
-                    NeuralNetwork demoAgentNetwork = _agents
-                        .OrderByDescending(agent => agent.FitnessAccumulator.Fitness)
-                        .First()
-                        .Network
-                        .Clone();
-
-                    try
-                    {
-                        Scenes.Data.Add(DataTags.DemoAgentNetwork, demoAgentNetwork);
-                    }
-                    catch (ArgumentException) {}
-
-                    Scenes.Load(SceneId.DemoScene);
+                    PrepareDemoScene();
                 }
 
                 return;
@@ -112,6 +103,42 @@ namespace GeneticCars.Assets.Scripts
             HighestFitnessText.text = _highestFitness.ToString();
         }
 
+        private void PrepareNextGeneration()
+        {
+            _geneticAlgorithm.NextGeneration(_agents.Select(agent => new GeneticAlgorithmAgent()
+            {
+                Network = agent.Network,
+                Fitness = agent.FitnessAccumulator.Fitness
+            }).ToList());
+
+            SetTimestampToNow();
+            ResetAgents();
+        }
+
+        private void PrepareNextTrack()
+        {
+            _tracks[_trackIndex].SetActive(false);
+            _tracks[++_trackIndex].SetActive(true);
+            _geneticAlgorithm.ResetGenerationCounter();
+        }
+
+        private void PrepareDemoScene()
+        {
+            NeuralNetwork demoAgentNetwork = _agents
+                .OrderByDescending(agent => agent.FitnessAccumulator.Fitness)
+                .First()
+                .Network
+                .Clone();
+
+            try
+            {
+                Scenes.Data.Add(DataTags.DemoAgentNetwork, demoAgentNetwork);
+            }
+            catch (ArgumentException) { }
+
+            Scenes.Load(SceneId.DemoScene);
+        }
+
         private void ResetAgents()
         {
             float highestGenerationFitness = GetHighestGenerationFitness();
@@ -120,6 +147,8 @@ namespace GeneticCars.Assets.Scripts
                 _highestFitness = highestGenerationFitness;
             }
 
+            Transform trackStartPoint = _tracks[_trackIndex].transform.Find(Tags.TrackStartPoint);
+
             foreach (var (agent, index) in _agents.Select((agent, index) => (agent, index)))
             {
                 if (agent.GameObject != null)
@@ -127,7 +156,7 @@ namespace GeneticCars.Assets.Scripts
                     Destroy(agent.GameObject);
                 }
 
-                GameObject gameObject = Instantiate(CarPrefab, _trackStartPoint, Quaternion.identity);
+                GameObject gameObject = Instantiate(CarPrefab, trackStartPoint.position, trackStartPoint.rotation);
                 Car car = gameObject.GetComponent<Car>();
                 NeuralNetwork network = _geneticAlgorithm.Population[index];
                 Probe probe = gameObject.GetComponentInChildren<Probe>();
@@ -138,7 +167,7 @@ namespace GeneticCars.Assets.Scripts
 
                 probe.Reset(network.NetworkParameters.InputCount - 1);
                 agent.CarController = new NeuralNetworkCarController(car, probe, network);
-                agent.FitnessAccumulator = _fitnessAccumulatorFactory.Create(car);
+                agent.FitnessAccumulator = _fitnessAccumulatorFactory.Create(gameObject);
             }
         }
 

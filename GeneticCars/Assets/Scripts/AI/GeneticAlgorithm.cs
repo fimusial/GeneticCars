@@ -24,7 +24,7 @@ namespace GeneticCars.Assets.Scripts.AI
     {
         public GeneticAlgorithmParameters AlgorithmParameters { get; private set; }
         public IList<NeuralNetwork> Population { get; private set; }
-        public int Generation { get; set; }
+        public int Generation { get; private set; }
 
         public GeneticAlgorithm(GeneticAlgorithmParameters parameters)
         {
@@ -68,6 +68,11 @@ namespace GeneticCars.Assets.Scripts.AI
         public bool IsGenerationLimitReached()
         {
             return Generation >= AlgorithmParameters.MaxGenerationCount;
+        }
+
+        public void ResetGenerationCounter()
+        {
+            Generation = 0;
         }
     }
 }

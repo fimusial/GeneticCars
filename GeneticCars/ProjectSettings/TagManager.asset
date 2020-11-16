@@ -7,6 +7,7 @@ TagManager:
   - TrackWall
   - CarAgent
   - TrackStartPoint
+  - Track
   layers:
   - Default
   - TransparentFX

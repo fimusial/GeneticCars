@@ -1473,6 +1473,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 68e8cb4e79537444f996dc2fbea16d91, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  SpreadAngle: 120
-  MaxSensorDistance: 50
+  SpreadAngle: 140
+  MaxSensorDistance: 25
   DrawRays: 1

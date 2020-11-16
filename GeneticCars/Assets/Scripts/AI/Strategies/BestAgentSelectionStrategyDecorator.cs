@@ -16,7 +16,6 @@ namespace GeneticCars.Assets.Scripts.AI.Strategies
         public IList<NeuralNetwork> ApplySelection(IList<GeneticAlgorithmAgent> agents)
         {
             GeneticAlgorithmAgent currentBestAgent = agents.OrderByDescending(agent => agent.Fitness).First();
-            GeneticAlgorithmAgent currentWorstAgent = agents.OrderBy(agent => agent.Fitness).First();
 
             if (_bestAgent == null)
             {
@@ -28,6 +27,7 @@ namespace GeneticCars.Assets.Scripts.AI.Strategies
             }
             else
             {
+                GeneticAlgorithmAgent currentWorstAgent = agents.OrderBy(agent => agent.Fitness).First();
                 agents.Remove(currentWorstAgent);
                 agents.Add(currentBestAgent);
             }
