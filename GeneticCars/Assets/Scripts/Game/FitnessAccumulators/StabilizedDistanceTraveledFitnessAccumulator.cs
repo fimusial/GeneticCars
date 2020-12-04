@@ -13,6 +13,8 @@ namespace GeneticCars.Assets.Scripts.Game.FitnessAccumulators
         private float _distanceTraveled;
         private float _stabilizationPenalty;
 
+        private const double CureFactor = 0.46d;
+
         public StabilizedDistanceTraveledFitnessAccumulator(Car car, Probe probe)
         {
             _car = car;
@@ -29,7 +31,7 @@ namespace GeneticCars.Assets.Scripts.Game.FitnessAccumulators
             {
                 return;
             }
-            
+
             float displacement = (_car.transform.position - _lastPosition).magnitude;
             _distanceTraveled += displacement;
             _lastPosition = _car.transform.position;
@@ -38,7 +40,12 @@ namespace GeneticCars.Assets.Scripts.Game.FitnessAccumulators
             float rightSensorDistance = _probe.SensorDistances[_probe.SensorCount - 1];
             float deviation = Math.Abs(leftSensorDistance - rightSensorDistance) / 2f;
 
-            _stabilizationPenalty += displacement * deviation / _probe.MaxSensorDistance;
+            _stabilizationPenalty += displacement * CurveFunction(deviation / _probe.MaxSensorDistance);
+        }
+
+        private float CurveFunction(float value)
+        {
+            return (float)Math.Pow((double)value, CureFactor);
         }
     }
 }

@@ -13,10 +13,13 @@ namespace GeneticCars.Assets.Scripts
         public InputField PopulationPairCount;
         public InputField MaxGenerationCount;
         public InputField WeightInitStdDev;
-        public InputField MinProbeCount;
-        public InputField MaxProbeCount;
+
+        public InputField MinSensorCount;
+        public InputField MaxSensorCount;
         public InputField MinHiddenLayerNeuronCount;
         public InputField MaxHiddenLayerNeuronCount;
+        public Toggle EvolveNetworkTopology;
+
         public Dropdown HiddenLayerActivationFunction;
         public Dropdown SelectionStrategy;
         public Toggle KeepBestAgent;
@@ -32,6 +35,20 @@ namespace GeneticCars.Assets.Scripts
 
         public void Start()
         {
+            EvolveNetworkTopology.onValueChanged.AddListener((value) =>
+            {
+                if (!EvolveNetworkTopology.isOn)
+                {
+                    MaxSensorCount.interactable = false;
+                    MaxHiddenLayerNeuronCount.interactable = false;
+                }
+                else
+                {
+                    MaxSensorCount.interactable = true;
+                    MaxHiddenLayerNeuronCount.interactable = true;
+                }
+            });
+
             SetTimestampToNow();
         }
 
@@ -42,7 +59,6 @@ namespace GeneticCars.Assets.Scripts
                 ValidationMessage.enabled = false;
             }
         }
-
 
         public void ButtonStartOnClick()
         {
@@ -58,10 +74,12 @@ namespace GeneticCars.Assets.Scripts
                 PopulationCount = 2 * int.Parse(PopulationPairCount.text),
                 MaxGenerationCount = int.Parse(MaxGenerationCount.text),
                 NeuralNetworkWeightInitializationDistribution = new Normal(0f, double.Parse(WeightInitStdDev.text)),
-                MinProbeCount = int.Parse(MinProbeCount.text),
-                MaxProbeCount = int.Parse(MaxProbeCount.text),
+
+                MinSensorCount = int.Parse(MinSensorCount.text),
+                MaxSensorCount = int.Parse(MaxSensorCount.text),
                 MinHiddenLayerNeuronCount = int.Parse(MinHiddenLayerNeuronCount.text),
                 MaxHiddenLayerNeuronCount = int.Parse(MaxHiddenLayerNeuronCount.text),
+                EvolveNetworkTopology = EvolveNetworkTopology.isOn,
 
                 NeuralNetworkHiddenLayerActivationFunction = GetHiddenLayerActivationFunction(),
                 NeuralNetworkOutputLayerActivationFunction = x => (float)Math.Tanh(x),
@@ -69,8 +87,8 @@ namespace GeneticCars.Assets.Scripts
                 SelectionStrategy = GetSelectionStrategy(),
                 CrossoverStrategy = GetCrossoverStrategy()
             };
-            geneticAlgorithmParameters.MutationStrategy = GetMutationStrategy(geneticAlgorithmParameters);
 
+            geneticAlgorithmParameters.MutationStrategy = GetMutationStrategy(geneticAlgorithmParameters);
             IFitnessAccumulatorFactory fitnessAccumulatorFactory = GetFitnessAccumulatorFactory();
 
             Scenes.Data.Add(DataTags.GeneticAlgorithmParameters, geneticAlgorithmParameters);
@@ -125,10 +143,12 @@ namespace GeneticCars.Assets.Scripts
                     double mutationRangeD2 = double.Parse(MutationRange.text) / 2;
                     var parameters = new StandardMutationStrategyParameters()
                     {
-                        MinProbeCount = geneticAlgorithmParameters.MinProbeCount,
-                        MaxProbeCount = geneticAlgorithmParameters.MaxProbeCount,
+                        MinSensorCount = geneticAlgorithmParameters.MinSensorCount,
+                        MaxSensorCount = geneticAlgorithmParameters.MaxSensorCount,
                         MinHiddenLayerNeuronCount = geneticAlgorithmParameters.MinHiddenLayerNeuronCount,
                         MaxHiddenLayerNeuronCount = geneticAlgorithmParameters.MaxHiddenLayerNeuronCount,
+                        EvolveNetworkTopology = EvolveNetworkTopology.isOn,
+
                         NeuralNetworkWeightInitializationDistribution = geneticAlgorithmParameters.NeuralNetworkWeightInitializationDistribution,
                         MutationRate = float.Parse(MutationRate.text),
                         NeuralNetworkWeightMutationDistribution = new ContinuousUniform(-mutationRangeD2, mutationRangeD2)
@@ -151,15 +171,15 @@ namespace GeneticCars.Assets.Scripts
 
         private bool IsFormValid()
         {
-            if (int.Parse(PopulationPairCount.text) <= 0) return false;
-            if (int.Parse(MaxGenerationCount.text) <= 0) return false;
-            
-            if (int.Parse(MinProbeCount.text) <= 0) return false;
-            if (int.Parse(MaxProbeCount.text) < int.Parse(MinProbeCount.text)) return false;
-            
-            if (int.Parse(MinHiddenLayerNeuronCount.text) <= 0) return false;
-            if (int.Parse(MaxHiddenLayerNeuronCount.text) < int.Parse(MinHiddenLayerNeuronCount.text)) return false;
-            
+            if (int.Parse(PopulationPairCount.text) < 1) return false;
+            if (int.Parse(MaxGenerationCount.text) < 1) return false;
+
+            if (int.Parse(MinSensorCount.text) < 2) return false;
+            if (int.Parse(MaxSensorCount.text) <= int.Parse(MinSensorCount.text)) return false;
+
+            if (int.Parse(MinHiddenLayerNeuronCount.text) < 1) return false;
+            if (int.Parse(MaxHiddenLayerNeuronCount.text) <= int.Parse(MinHiddenLayerNeuronCount.text)) return false;
+
             if (float.Parse(CrossoverRate.text) <= 0f || float.Parse(CrossoverRate.text) > 1f) return false;
             if (float.Parse(MutationRate.text) <= 0f || float.Parse(MutationRate.text) > 1f) return false;
             if (float.Parse(MutationRange.text) <= 0f) return false;

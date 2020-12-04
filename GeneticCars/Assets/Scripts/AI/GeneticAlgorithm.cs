@@ -9,10 +9,13 @@ namespace GeneticCars.Assets.Scripts.AI
         public int PopulationCount { get; set; }
         public int MaxGenerationCount { get; set; }
         public IContinuousDistribution NeuralNetworkWeightInitializationDistribution { get; set; }
-        public int MinProbeCount { get; set; }
-        public int MaxProbeCount { get; set; }
+
+        public int MinSensorCount { get; set; }
+        public int MaxSensorCount { get; set; }
         public int MinHiddenLayerNeuronCount { get; set; }
         public int MaxHiddenLayerNeuronCount { get; set; }
+        public bool EvolveNetworkTopology { get; set; }
+
         public Func<float, float> NeuralNetworkHiddenLayerActivationFunction { get; set; }
         public Func<float, float> NeuralNetworkOutputLayerActivationFunction { get; set; }
         public ISelectionStrategy SelectionStrategy { get; set; }
@@ -29,21 +32,21 @@ namespace GeneticCars.Assets.Scripts.AI
         public GeneticAlgorithm(GeneticAlgorithmParameters parameters)
         {
             AlgorithmParameters = parameters;
+            Population = new List<NeuralNetwork>();
+            Generation = 0;
         }
 
         public void Initialize()
         {
-            Population = new List<NeuralNetwork>();
+            var inputCountDistribution = new DiscreteUniform(1 + AlgorithmParameters.MinSensorCount, 1 + AlgorithmParameters.MaxSensorCount);
+            var hiddenNeuronCountDistribution = new DiscreteUniform(AlgorithmParameters.MinHiddenLayerNeuronCount, AlgorithmParameters.MaxHiddenLayerNeuronCount);
 
             for (int i = 0; i < AlgorithmParameters.PopulationCount; i++)
             {
-                var inputCountDistribution = new DiscreteUniform(1 + AlgorithmParameters.MinProbeCount, 1 + AlgorithmParameters.MaxProbeCount);
-                var hiddenNeuronCountDistribution = new DiscreteUniform(AlgorithmParameters.MinHiddenLayerNeuronCount, AlgorithmParameters.MaxHiddenLayerNeuronCount);
-
                 var networkParameters = new NeuralNetworkParameters()
                 {
-                    InputCount = inputCountDistribution.Sample(),
-                    HiddenLayerNeuronCount = hiddenNeuronCountDistribution.Sample(),
+                    InputCount = AlgorithmParameters.EvolveNetworkTopology ? inputCountDistribution.Sample() : AlgorithmParameters.MinSensorCount + 1,
+                    HiddenLayerNeuronCount = AlgorithmParameters.EvolveNetworkTopology ? hiddenNeuronCountDistribution.Sample() : AlgorithmParameters.MinHiddenLayerNeuronCount,
                     OutputCount = 2,
                     HiddenLayerActivationFunction = AlgorithmParameters.NeuralNetworkHiddenLayerActivationFunction,
                     OutputLayerActivationFunction = AlgorithmParameters.NeuralNetworkOutputLayerActivationFunction
@@ -51,8 +54,6 @@ namespace GeneticCars.Assets.Scripts.AI
 
                 Population.Add(new NeuralNetwork(networkParameters, AlgorithmParameters.NeuralNetworkWeightInitializationDistribution));
             }
-
-            Generation = 0;
         }
 
         public void NextGeneration(IList<GeneticAlgorithmAgent> agents)

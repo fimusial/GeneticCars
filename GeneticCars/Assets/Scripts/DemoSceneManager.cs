@@ -3,6 +3,7 @@ using System.Linq;
 using GeneticCars.Assets.Scripts.AI;
 using GeneticCars.Assets.Scripts.Game;
 using UnityEngine;
+using UnityEngine.UI;
 using UnityStandardAssets.Vehicles.Car;
 
 namespace GeneticCars.Assets.Scripts
@@ -10,12 +11,15 @@ namespace GeneticCars.Assets.Scripts
     public class DemoSceneManager : MonoBehaviour
     {
         public GameObject CarPrefab;
+        public Text TextFitness;
 
         private int _trackIndex;
         private IList<GameObject> _tracks;
 
         private GameObject _carGameObject;
         private ICarController _carController;
+        private IFitnessAccumulator _fitnessAccumulator;
+
         private const float FirstStartTimeDelay = 0.5f;
 
         public void Start()
@@ -41,6 +45,9 @@ namespace GeneticCars.Assets.Scripts
             }
 
             _carController.MoveCar();
+            _fitnessAccumulator.Update();
+
+            TextFitness.text = _fitnessAccumulator.Fitness.ToString();
         }
 
         public void CycleTracks()
@@ -71,6 +78,8 @@ namespace GeneticCars.Assets.Scripts
 
             CarFollowCamera camera = GameObject.FindGameObjectWithTag("MainCamera").GetComponent<CarFollowCamera>();
             camera.Target = gameObject;
+
+            _fitnessAccumulator = ((IFitnessAccumulatorFactory)Scenes.Data[DataTags.FitnessAccumulatorFactory]).Create(gameObject);
         }
     }
 }

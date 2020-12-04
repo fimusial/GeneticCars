@@ -1,16 +1,17 @@
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using MathNet.Numerics.Distributions;
 
 namespace GeneticCars.Assets.Scripts.AI.Strategies
 {
     public class StandardMutationStrategyParameters
     {
-        public int MinProbeCount { get; set; }
-        public int MaxProbeCount { get; set; }
+        public int MinSensorCount { get; set; }
+        public int MaxSensorCount { get; set; }
         public int MinHiddenLayerNeuronCount { get; set; }
         public int MaxHiddenLayerNeuronCount { get; set; }
+        public bool EvolveNetworkTopology { get; set; }
+
         public float MutationRate { get; set; }
         public IContinuousDistribution NeuralNetworkWeightInitializationDistribution { get; set; }
         public IContinuousDistribution NeuralNetworkWeightMutationDistribution { get; set; }
@@ -30,58 +31,13 @@ namespace GeneticCars.Assets.Scripts.AI.Strategies
         {
             var mutatedPopulation = new List<NeuralNetwork>();
 
-            var inputCountDistribution = new DiscreteUniform(1 + _parameters.MinProbeCount, 1 + _parameters.MaxProbeCount);
-            var hiddenNeuronCountDistribution = new DiscreteUniform(_parameters.MinHiddenLayerNeuronCount, _parameters.MaxHiddenLayerNeuronCount);
-
             foreach (var agent in population)
             {
                 Chromosome chromosome = agent.GetChromosome();
 
-                if (ShouldMutate())
+                if (_parameters.EvolveNetworkTopology)
                 {
-                    int oldInputCount = chromosome.InputCount;
-                    chromosome.InputCount = inputCountDistribution.Sample();
-                    if (oldInputCount != chromosome.InputCount)
-                    {
-                        for (int i = 0; i < chromosome.HiddenLayerNeurons.Count; i++)
-                        {
-                            var newNeuronData = new float[chromosome.InputCount + 1];
-                            CopyAndFill(chromosome.HiddenLayerNeurons[i], newNeuronData);
-                            chromosome.HiddenLayerNeurons[i] = newNeuronData;
-                        }
-                    }
-                }
-
-                if (ShouldMutate())
-                {
-                    int oldHiddenLayerNeuronCount = chromosome.HiddenLayerNeuronCount;
-                    chromosome.HiddenLayerNeuronCount = hiddenNeuronCountDistribution.Sample();
-
-                    if (oldHiddenLayerNeuronCount != chromosome.HiddenLayerNeuronCount)
-                    {
-                        int diff = oldHiddenLayerNeuronCount - chromosome.HiddenLayerNeuronCount;
-                        if (diff > 0)
-                        {
-                            for (int i = 0; i < diff; i++)
-                            {
-                                chromosome.HiddenLayerNeurons.RemoveAt(chromosome.HiddenLayerNeurons.Count - 1);
-                            }
-                        }
-                        else
-                        {
-                            for (int i = 0; i < Math.Abs(diff); i++)
-                            {
-                                chromosome.HiddenLayerNeurons.Add(NewNeuron(chromosome.InputCount));
-                            }
-                        }
-
-                        for (int i = 0; i < chromosome.OutputLayerNeurons.Count; i++)
-                        {
-                            var newNeuronData = new float[chromosome.HiddenLayerNeuronCount + 1];
-                            CopyAndFill(chromosome.OutputLayerNeurons[i], newNeuronData);
-                            chromosome.OutputLayerNeurons[i] = newNeuronData;
-                        }
-                    }
+                    MutateNetworkTopology(chromosome);
                 }
 
                 foreach (var neuronData in chromosome.HiddenLayerNeurons)
@@ -100,11 +56,64 @@ namespace GeneticCars.Assets.Scripts.AI.Strategies
                     }
                 }
 
-                var network = new NeuralNetwork(chromosome,
-                    agent.NetworkParameters.HiddenLayerActivationFunction, agent.NetworkParameters.OutputLayerActivationFunction);
+                var network = new NeuralNetwork(chromosome, agent.NetworkParameters.HiddenLayerActivationFunction, agent.NetworkParameters.OutputLayerActivationFunction);
                 mutatedPopulation.Add(network);
             }
+
             return mutatedPopulation;
+        }
+
+        private void MutateNetworkTopology(Chromosome chromosome)
+        {
+            var inputCountDistribution = new DiscreteUniform(1 + _parameters.MinSensorCount, 1 + _parameters.MaxSensorCount);
+            var hiddenNeuronCountDistribution = new DiscreteUniform(_parameters.MinHiddenLayerNeuronCount, _parameters.MaxHiddenLayerNeuronCount);
+
+            if (!ShouldMutate())
+            {
+                return;
+            }
+
+            int oldInputCount = chromosome.InputCount;
+            chromosome.InputCount = inputCountDistribution.Sample();
+            if (oldInputCount != chromosome.InputCount)
+            {
+                for (int i = 0; i < chromosome.HiddenLayerNeurons.Count; i++)
+                {
+                    var newNeuronData = new float[chromosome.InputCount + 1];
+                    CopyAndFill(chromosome.HiddenLayerNeurons[i], newNeuronData);
+                    chromosome.HiddenLayerNeurons[i] = newNeuronData;
+                }
+            }
+
+            int oldHiddenLayerNeuronCount = chromosome.HiddenLayerNeuronCount;
+            chromosome.HiddenLayerNeuronCount = hiddenNeuronCountDistribution.Sample();
+
+            if (oldHiddenLayerNeuronCount != chromosome.HiddenLayerNeuronCount)
+            {
+                int diff = oldHiddenLayerNeuronCount - chromosome.HiddenLayerNeuronCount;
+                if (diff > 0)
+                {
+                    for (int i = 0; i < diff; i++)
+                    {
+                        int index = new DiscreteUniform(0, chromosome.HiddenLayerNeurons.Count - 1).Sample();
+                        chromosome.HiddenLayerNeurons.RemoveAt(index);
+                    }
+                }
+                else
+                {
+                    for (int i = 0; i < Math.Abs(diff); i++)
+                    {
+                        chromosome.HiddenLayerNeurons.Add(NewNeuron(chromosome.InputCount));
+                    }
+                }
+
+                for (int i = 0; i < chromosome.OutputLayerNeurons.Count; i++)
+                {
+                    var newNeuronData = new float[chromosome.HiddenLayerNeuronCount + 1];
+                    CopyAndFill(chromosome.OutputLayerNeurons[i], newNeuronData);
+                    chromosome.OutputLayerNeurons[i] = newNeuronData;
+                }
+            }
         }
 
         private bool ShouldMutate()
