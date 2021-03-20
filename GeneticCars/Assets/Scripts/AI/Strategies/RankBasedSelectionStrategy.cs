@@ -13,15 +13,11 @@ namespace GeneticCars.Assets.Scripts.AI.Strategies
                 .ToList();
             
             int populationCount = agentsSorted.Count;
-            float maxRank = populationCount - 1f;
 
-            float[] partial = Enumerable
+            double[] probabilities = Enumerable
                 .Range(0, populationCount)
-                .Select(i => 1f - (i / maxRank))
+                .Select(i => (double)(2 * i) / (populationCount * (populationCount - 1)))
                 .ToArray();
-
-            float normalizeFactor = partial.Sum();
-            double[] probabilities = partial.Select(x => (double)normalizeFactor * x).ToArray();
 
             var distribution = new Categorical(probabilities);
             var newPopulation = new List<NeuralNetwork>();

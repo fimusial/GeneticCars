@@ -35,6 +35,9 @@ namespace GeneticCars.Assets.Scripts
             }
 
             NextTrack(false);
+
+            DataCollector.AddDataPoint("nn", ((NeuralNetwork)Scenes.Data[DataTags.DemoAgentNetwork]).ToFullParamsString());
+            DataCollector.SaveDataSets(@"D:\Data\other\genetic-cars-data");
         }
 
         public void FixedUpdate()

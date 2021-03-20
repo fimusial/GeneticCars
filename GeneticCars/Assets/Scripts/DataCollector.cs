@@ -15,6 +15,7 @@ namespace GeneticCars.Assets.Scripts
             public const string MaxFitness = "max-fitness";
             public const string MinFitness = "min-fitness";
             public const string AvgFitness = "avg-fitness";
+            public const string TopologyTrends = "topology-trends";
         }
 
         static DataCollector()
@@ -39,11 +40,11 @@ namespace GeneticCars.Assets.Scripts
 
         public static void SaveDataSets(string rootDirectoryPath)
         {
+            string directoryPath = Path.Combine(rootDirectoryPath, GenerateDirectoryName());
+            Directory.CreateDirectory(directoryPath);
+
             foreach (var kvp in DataSets)
             {
-                string directoryPath = Path.Combine(rootDirectoryPath, GenerateDirectoryName());
-                Directory.CreateDirectory(directoryPath);
-
                 string filePath = Path.Combine(directoryPath, kvp.Key + FileExtension);
                 File.WriteAllLines(filePath, kvp.Value.Select(point => point.ToString()));
             }

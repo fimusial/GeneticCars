@@ -127,5 +127,16 @@ namespace GeneticCars.Assets.Scripts.AI
             return $"{NetworkParameters.InputCount}-{NetworkParameters.HiddenLayerNeuronCount} " +
             $"{HiddenWeights.GetHashCode()},{HiddenBiases.GetHashCode()},{OutputWeights.GetHashCode()},{OutputBiases.GetHashCode()}";
         }
+
+        public string ToFullParamsString()
+        {
+            return $"{NetworkParameters.InputCount}-{NetworkParameters.HiddenLayerNeuronCount}\n" +
+            $"{HiddenWeights.ToMatrixString()}\n{HiddenBiases.ToVectorString()}\n{OutputWeights.ToMatrixString()}\n{OutputBiases.ToVectorString()}";
+        }
+
+        public string GetTopologyIdentifier()
+        {
+            return $"{NetworkParameters.InputCount}-{NetworkParameters.HiddenLayerNeuronCount}";
+        }
     }
 }

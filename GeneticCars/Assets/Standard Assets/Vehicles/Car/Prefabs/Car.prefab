@@ -1474,5 +1474,5 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   SpreadAngle: 140
-  MaxSensorDistance: 25
+  MaxSensorDistance: 50
   DrawRays: 1

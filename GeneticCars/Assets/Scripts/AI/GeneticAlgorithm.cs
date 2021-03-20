@@ -1,5 +1,7 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
+using System.Text;
 using MathNet.Numerics.Distributions;
 
 namespace GeneticCars.Assets.Scripts.AI
@@ -58,6 +60,8 @@ namespace GeneticCars.Assets.Scripts.AI
 
         public void NextGeneration(IList<GeneticAlgorithmAgent> agents)
         {
+            GatherData(agents);
+
             IList<NeuralNetwork> reproducedPopulation = AlgorithmParameters.SelectionStrategy.ApplySelection(agents);
             IList<NeuralNetwork> crossoverPopulation = AlgorithmParameters.CrossoverStrategy.ApplyCrossover(reproducedPopulation);
             IList<NeuralNetwork> mutatedPopulation = AlgorithmParameters.MutationStrategy.ApplyMutations(crossoverPopulation);
@@ -74,6 +78,35 @@ namespace GeneticCars.Assets.Scripts.AI
         public void ResetGenerationCounter()
         {
             Generation = 0;
+        }
+
+        private void GatherData(IList<GeneticAlgorithmAgent> agents)
+        {
+            DataCollector.AddDataPoint(DataCollector.SetsNames.MinFitness, agents.Min(agent => agent.Fitness));
+            DataCollector.AddDataPoint(DataCollector.SetsNames.MaxFitness, agents.Max(agent => agent.Fitness));
+            DataCollector.AddDataPoint(DataCollector.SetsNames.AvgFitness, agents.Average(agent => agent.Fitness));
+
+            IDictionary<string, int> topologyTrends = new Dictionary<string, int>();
+            foreach (var network in agents.Select(agent => agent.Network))
+            {
+                string topologyIdentifier = network.GetTopologyIdentifier();
+                if (!topologyTrends.ContainsKey(topologyIdentifier))
+                {
+                    topologyTrends.Add(topologyIdentifier, 1);
+                }
+                else
+                {
+                    topologyTrends[topologyIdentifier]++;
+                }
+            }
+
+            var topologyTrendsStringBuilder = new StringBuilder();
+            foreach (var kvp in topologyTrends)
+            {
+                topologyTrendsStringBuilder.Append($"{kvp.Key}:{kvp.Value},");
+            }
+
+            DataCollector.AddDataPoint(DataCollector.SetsNames.TopologyTrends, topologyTrendsStringBuilder.ToString());
         }
     }
 }
